@@ -1,0 +1,5 @@
+# Vercel ignore file
+*.db
+*.db-shm
+*.db-wal
+simple.db
