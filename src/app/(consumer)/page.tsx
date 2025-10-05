@@ -26,43 +26,95 @@ import { DatabaseTest } from '@/components/debug/database-test'
 import { StaticCategoriesSection, StaticFeaturedProductsSection } from '@/components/demo/static-demo'
 
 async function getFeaturedProducts() {
-  return await prisma.product.findMany({
-    where: {
-      isActive: true
-    },
-    include: {
-      category: true,
-      images: true
-    },
-    take: 8,
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
+  try {
+    return await prisma.product.findMany({
+      where: {
+        isActive: true
+      },
+      include: {
+        category: true,
+        images: true
+      },
+      take: 8,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+  } catch (error) {
+    console.log('Database not available, using static data')
+    return []
+  }
 }
 
 async function getCategories() {
-  return await prisma.category.findMany({
-    where: {
-      isActive: true,
-      products: {
-        some: {
-          isActive: true
+  try {
+    return await prisma.category.findMany({
+      where: {
+        isActive: true,
+        products: {
+          some: {
+            isActive: true
+          }
         }
-      }
-    },
-    include: {
-      _count: {
-        select: {
-          products: {
-            where: {
-              isActive: true
+      },
+      include: {
+        _count: {
+          select: {
+            products: {
+              where: {
+                isActive: true
+              }
             }
           }
         }
       }
-    }
-  })
+    })
+  } catch (error) {
+    console.log('Database not available, using static categories')
+    // Return static fallback categories
+    return [
+      {
+        id: BigInt(1),
+        name: 'Smartphones',
+        slug: 'smartphones',
+        description: 'Latest smartphones from top brands',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _count: { products: 25 }
+      },
+      {
+        id: BigInt(2),
+        name: 'Laptops',
+        slug: 'laptops',
+        description: 'High-performance laptops for work and gaming',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _count: { products: 18 }
+      },
+      {
+        id: BigInt(3),
+        name: 'Audio Devices',
+        slug: 'audio',
+        description: 'Headphones, earbuds, and speakers',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _count: { products: 30 }
+      },
+      {
+        id: BigInt(4),
+        name: 'Accessories',
+        slug: 'accessories',
+        description: 'Chargers, cases, and more',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _count: { products: 45 }
+      }
+    ]
+  }
 }
 
 
@@ -147,6 +199,24 @@ async function CategoriesSection() {
 
 async function FeaturedProductsSection() {
   const products = await getFeaturedProducts()
+
+  if (products.length === 0) {
+    return (
+      <section className="py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Featured Products
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+            Hand-picked products with the best value for money
+          </p>
+          <p className="text-gray-500">
+            Products will be available soon. Please check back later or visit our store.
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <EnhancedProductShowcase
