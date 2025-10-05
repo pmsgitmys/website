@@ -117,9 +117,7 @@ export default function CheckoutPage() {
         clearCart()
         toast.success('Order placed successfully!')
         router.push('/orders')
-      } else if (paymentMethod.type === 'razorpay' || paymentMethod.type === 'upi') {
-        // Razorpay payment
-        await handleRazorpayPayment(order)
+      // Razorpay and UPI payment temporarily disabled for deployment
       }
     } catch (error) {
       console.error('Order placement error:', error)
