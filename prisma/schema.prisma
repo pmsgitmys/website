@@ -1,0 +1,348 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./simple.db"
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+
+  @@map("categories")
+}
+
+model Product {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  comparePrice Float?
+  brand       String?
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id])
+  sku         String?        @unique
+  stock       Int            @default(0)
+  features    String         // JSON string
+  specifications String       // JSON string
+  images      ProductImage[]
+  reviews     Review[]
+  wishlist    Wishlist[]
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("product_images")
+}
+
+model User {
+  id                String     @id @default(cuid())
+  name              String?
+  email             String     @unique
+  password          String?
+  image             String?
+  role              UserRole   @default(CUSTOMER)
+  status            UserStatus @default(ACTIVE)
+  isActive          Boolean    @default(true)
+  emailVerified     DateTime?
+  twoFactorEnabled  Boolean    @default(false)
+  twoFactorSecret   String?
+  lastLoginAt       DateTime?
+  loginAttempts     Int        @default(0)
+  lockedUntil       DateTime?
+  departmentId      String?
+  department        Department? @relation(fields: [departmentId], references: [id])
+  roleId            String?
+  userRole          Role?       @relation(fields: [roleId], references: [id])
+  orders            Order[]
+  reviews           Review[]
+  wishlist          Wishlist[]
+  adminSessions     AdminSession[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  EMPLOYEE
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_APPROVAL
+  LOCKED
+}
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  EXPORT
+  IMPORT
+}
+
+enum ModuleName {
+  DASHBOARD
+  SALES
+  INVENTORY
+  CUSTOMERS
+  ORDERS
+  PRODUCTS
+  ANALYTICS
+  REPORTS
+  USERS
+  SETTINGS
+  FINANCE
+  MARKETING
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  parentId    String?
+  parent      Department? @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DepartmentHierarchy")
+  users       User[]
+  roles       Role[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("departments")
+}
+
+model Permission {
+  id          String         @id @default(cuid())
+  module      ModuleName
+  action      PermissionAction
+  resource    String?        // Specific resource like "product:electronics"
+  description String?
+  roles       RolePermission[]
+  createdAt   DateTime       @default(now())
+
+  @@unique([module, action, resource])
+  @@map("permissions")
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  code            String           @unique
+  description     String?
+  level           Int              @default(1) // Hierarchy level
+  departmentId    String?
+  department      Department?      @relation(fields: [departmentId], references: [id])
+  permissions     RolePermission[]
+  users           User[]
+  isSystemRole    Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("roles")
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedBy    String?
+  grantedAt    DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model AdminSession {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token         String   @unique
+  sessionId     String   @unique
+  expiresAt     DateTime
+  ipAddress     String?
+  userAgent     String?
+  location      String?  // Geolocation
+  deviceInfo    String?  // Device fingerprint
+  isActive      Boolean  @default(true)
+  lastActivity  DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@map("admin_sessions")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userName    String?
+  action      String
+  module      String
+  resourceId  String?
+  resourceType String?
+  oldValues   String?  // JSON
+  newValues   String?  // JSON
+  ipAddress   String?
+  userAgent   String?
+  sessionId   String?
+  success     Boolean
+  errorMessage String?
+  timestamp   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model SecurityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  details     String   // JSON string
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  riskLevel   String   @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  success     Boolean
+  createdAt   DateTime @default(now())
+
+  @@map("security_logs")
+}
+
+model SystemConfiguration {
+  id          String   @id @default(cuid())
+  category    String
+  key         String
+  value       String
+  dataType    String   @default("STRING") // STRING, NUMBER, BOOLEAN, JSON
+  description String?
+  isSecret    Boolean  @default(false)
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([category, key])
+  @@map("system_configurations")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  totalAmount     Float
+  status          String      @default("PENDING")
+  paymentMethod   String
+  shippingAddress String      // JSON string
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5 stars
+  title     String?
+  comment   String?
+  verified  Boolean  @default(false) // If user bought this product
+  helpfulCount Int   @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) // One review per user per product
+  @@map("reviews")
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) // One wishlist item per user per product
+  @@map("wishlist")
+}

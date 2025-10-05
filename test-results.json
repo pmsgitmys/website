@@ -1,0 +1,76 @@
+{
+  "passed": 10,
+  "failed": 4,
+  "tests": [
+    {
+      "testName": "Homepage loads with PhoneMax logo",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Hero section is present",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Categories section is present",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Navigation menu exists",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Products page loads",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "testName": "Search input is present",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Search functionality works",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Sign in page loads",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Sign up page loads",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "testName": "Admin login successful",
+      "passed": false,
+      "message": ""
+    },
+    {
+      "testName": "Product detail page loads",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Add to cart functionality works",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Cart icon updates after adding items",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "testName": "Test execution",
+      "passed": false,
+      "message": "page.waitForLoadState: Timeout 30000ms exceeded."
+    }
+  ]
+}
